@@ -1,35 +1,21 @@
-const WebSocket = require("ws");
-const { pool } = require("../database/database").pool;
-require("dotenv").config();
+const { pool } = require("../database/database");
+const router = require("express").Router();
 
-const wss = new WebSocket.Server({ port: 8081 });
+router.post("/", async (req, res) => {
+  try {
+    const { route, statusCode, message, userId, appName, timestamp } = req.body;
 
-wss.on("connection", (ws) => {
-  console.log("A client connected.");
+    await pool.query(
+      "INSERT INTO logs (route, status_code, message, user_id, app_name, timestamp) VALUES ($1, $2, $3, $4, $5, $6)",
+      [route, statusCode, message, userId, appName, new Date(timestamp)]
+    );
 
-  ws.on("message", async (request) => {
-    const parsedRequest = JSON.parse(request);
+    return res.status(200).json({ message: "Log created successfully." });
+  } catch (err) {
+    console.log(err.message);
 
-    try {
-      await pool.query(
-        "INSERT INTO logs (route, statu_code, message, user_id, app_name, timestamp) VALUES ($1, $2, $3, $4, $5)",
-        [
-          parsedRequest.route,
-          parsedRequest.statusCode,
-          parsedRequest.message,
-          parsedRequest.userId,
-          parsedRequest.appName,
-          parsedRequest.timestamp,
-        ]
-      );
-    } catch (error) {
-      console.error("Error inserting log:", error);
-    }
-  });
-
-  ws.on("close", () => {
-    console.log("A client disconnected.");
-  });
+    return res.status(500).send(err.message);
+  }
 });
 
-console.log("WebSocket server is running on port 8080.");
+module.exports = router;

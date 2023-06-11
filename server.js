@@ -7,9 +7,8 @@ app.use(express.json());
 app.set("port", process.env.PORT || 3001);
 //app.set("trust proxy", true);
 
-app.use("logs", require("./src/routes/audit"));
-
-require("./src/routes/logger");
+app.use("/logs", require("./src/routes/audit"));
+app.use("", require("./src/routes/logger"));
 
 app.get("*", async (req, res) => {
   res.status(404).send("404 Not Found");
